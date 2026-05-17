@@ -23,7 +23,7 @@ Mombeu — encoder de pertinencia temática
     ├── No → respuesta sin modificar
     │
     └── Sí → genera cierre narrativo
-              basado en Ñandeypykuera + grafo
+              basado en Ñande Ypykuéra + grafo
         ↓
 Respuesta enriquecida al usuario
 ```
@@ -34,7 +34,7 @@ Respuesta enriquecida al usuario
 > Los truenos ocurren cuando el aire caliente sube rápidamente y genera descargas eléctricas en las nubes.
 
 **Con Mombeu:**
-> Los truenos ocurren cuando el aire caliente sube rápidamente y genera descargas eléctricas en las nubes. Eso me recuerda a **Tupã**, cuya voz retumba en el cielo según nos enseña Ñandeypykuera — para el pueblo guaraní, el trueno no era un fenómeno sino la presencia del creador.
+> Los truenos ocurren cuando el aire caliente sube rápidamente y genera descargas eléctricas en las nubes. Eso me recuerda a **Tupã**, cuya voz retumba en el cielo para el pueblo guaraní, el trueno no era un fenómeno sino la presencia del creador.
 
 ---
 
@@ -69,7 +69,7 @@ tareas técnicas, tecnología      → baja o nula
 Modelo generativo pequeño fine-tuneado con LoRA + DPO que genera el cierre narrativo cuando el encoder lo habilita. Entrenado con pares chosen/rejected anotados por expertos en cosmovisión guaraní.
 
 ### 3. Grafo de conocimiento mitológico
-Extraído del texto *Ñandeypykuera*. Captura personajes, relaciones y atributos de la cosmovisión guaraní. Cumple dos funciones:
+Extraído del texto *Ñande Ypykuéra*. Captura personajes, relaciones y atributos de la cosmovisión guaraní. Cumple dos funciones:
 - Validación automática de cierres antes de anotación humana
 - Balanceo de personajes en el dataset
 
@@ -87,11 +87,11 @@ El dataset de preferencias es la contribución central del proyecto — el prime
 
 ### Fuente cultural
 
-Todos los cierres provienen exclusivamente del texto *Ñandeypykuera*. El modelo no inventa ni mezcla fuentes — esto garantiza coherencia cultural y trazabilidad completa.
+Todos los cierres provienen exclusivamente del texto *Ñande Ypykuéra*. El modelo no inventa ni mezcla fuentes — esto garantiza coherencia cultural y trazabilidad completa.
 
 ### Criterios de anotación humana
 
-- ¿El personaje mencionado existe en *Ñandeypykuera*? (Sí/No)
+- ¿El personaje mencionado existe en *Ñande Ypykuéra*? (Sí/No)
 - ¿La relación descrita es correcta según el grafo? (Sí/No)
 - ¿La conexión temática es natural? (1–3)
 - ¿El cierre suena fluido con términos en guaraní? (1–3)
@@ -102,7 +102,7 @@ Todos los cierres provienen exclusivamente del texto *Ñandeypykuera*. El modelo
 
 Mombeu toma cuatro medidas explícitas para evitar folklorizar o estereotipar la cultura guaraní:
 
-1. **Fuente única.** Solo *Ñandeypykuera* — sin mezcla de fuentes ni referencias de internet.
+1. **Fuente única.** Solo *Ñande Ypykuéra* — sin mezcla de fuentes ni referencias de internet.
 2. **Validación experta.** Anotadores con conocimiento especializado en cosmovisión guaraní.
 3. **Grafo como validador.** Rechaza automáticamente cierres que contradicen el texto fuente.
 4. **Naturalidad como criterio.** Un cierre correcto pero forzado es rechazado. El objetivo es que suene como el abuelo, no como un libro de folklore.
@@ -166,7 +166,7 @@ print(respuesta_enriquecida)
 
 1. Arquitectura de capa cultural complementaria — encoder + modelo DPO que enriquece la salida de cualquier LLM sin modificar su arquitectura
 2. Dataset de preferencias culturales guaraní — primer corpus de pares chosen/rejected basado en cosmovisión guaraní
-3. Grafo de conocimiento mitológico — estructura verificable extraída de *Ñandeypykuera*
+3. Grafo de conocimiento mitológico — estructura verificable extraída de *Ñande Ypykuéra*
 
 ---
 
