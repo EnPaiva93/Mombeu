@@ -34,7 +34,7 @@ Respuesta enriquecida al usuario
 > Los truenos ocurren cuando el aire caliente sube rápidamente y genera descargas eléctricas en las nubes.
 
 **Con Mombeu:**
-> Los truenos ocurren cuando el aire caliente sube rápidamente y genera descargas eléctricas en las nubes. Eso me recuerda a **Tupã**, cuya voz retumba en el cielo para el pueblo guaraní, el trueno no era un fenómeno sino la presencia del creador.
+> Los truenos ocurren cuando el aire caliente sube rápidamente y genera descargas eléctricas en las nubes. Eso me recuerda a **Tupã**, cuya voz retumba en el cielo — para el pueblo guaraní, el trueno no era un fenómeno sino la presencia del creador.
 
 ---
 
@@ -48,9 +48,10 @@ Mombeu propone que cada respuesta sea una oportunidad de transmitir memoria cole
 
 ## Arquitectura
 
-Mombeu tiene tres componentes:
+Mombeu tiene tres componentes internos:
 
 ### 1. Encoder de pertinencia temática
+
 Modelo de clasificación liviano que decide si una respuesta merece un cierre cultural. No genera texto — solo responde si insertar o no.
 
 ```python
@@ -66,12 +67,128 @@ tareas técnicas, tecnología      → baja o nula
 ```
 
 ### 2. Modelo DPO de inserción narrativa
+
 Modelo generativo pequeño fine-tuneado con LoRA + DPO que genera el cierre narrativo cuando el encoder lo habilita. Entrenado con pares chosen/rejected anotados por expertos en cosmovisión guaraní.
 
 ### 3. Grafo de conocimiento mitológico
+
 Extraído del texto *Ñande Ypykuéra*. Captura personajes, relaciones y atributos de la cosmovisión guaraní. Cumple dos funciones:
 - Validación automática de cierres antes de anotación humana
 - Balanceo de personajes en el dataset
+
+---
+
+## Instalación
+
+```bash
+pip install mombeu
+```
+
+No se descarga ningún modelo al instalar. El modelo se elige y descarga explícitamente con `mombeu.init()`.
+
+---
+
+## Uso rápido
+
+```python
+import mombeu
+
+# 1. Inicializar una vez — descarga y cachea el modelo en el primer uso
+mombeu.init(model="mombeu-v1", hf_token="hf_...")
+
+# 2. Usar exactamente igual que openai.OpenAI
+client = mombeu.OpenAI(api_key="sk-...")
+
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "¿Qué son los truenos?"}],
+)
+
+print(response.choices[0].message.content)
+# → Respuesta de OpenAI ... seguida del cierre narrativo guaraní
+```
+
+---
+
+## Streaming
+
+```python
+mombeu.init(model="mombeu-v1", hf_token="hf_...")
+client = mombeu.OpenAI(api_key="sk-...")
+
+for chunk in client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "¿Qué son los truenos?"}],
+    stream=True,
+):
+    delta = chunk.choices[0].delta.content or ""
+    print(delta, end="", flush=True)
+```
+
+**Comportamiento del streaming:**
+- Todos los chunks de OpenAI se emiten en tiempo real, sin cambios.
+- Al terminar el stream, el modelo local genera el cierre narrativo.
+- El cierre se emite como un único chunk final.
+- Se agrega un chunk de stop para terminar el stream correctamente.
+
+---
+
+## Modelos disponibles
+
+```python
+import mombeu
+
+print(mombeu.list_models())
+# ['mombeu-fast', 'mombeu-v1', 'mombeu-v2']
+```
+
+| Slug           | Descripción                                  |
+|----------------|----------------------------------------------|
+| `mombeu-v1`    | Modelo de inserción narrativa general        |
+| `mombeu-v2`    | Mayor precisión cultural, más pesado         |
+| `mombeu-fast`  | Liviano, menor latencia                      |
+
+---
+
+## API reference
+
+### `mombeu.init(model, hf_token)`
+
+Inicializa Mombeu. Debe llamarse antes de crear un cliente.
+
+| Parámetro  | Tipo  | Descripción                                                    |
+|------------|-------|----------------------------------------------------------------|
+| `model`    | `str` | Slug del modelo. Ver `mombeu.list_models()`.                   |
+| `hf_token` | `str` | Token de HuggingFace con acceso de lectura al repositorio.     |
+
+Lanza `ValueError` si el slug no es soportado o el token es inválido.  
+Lanza `RuntimeError` si el pipeline del modelo falla al cargar.
+
+---
+
+### `mombeu.OpenAI(**kwargs)`
+
+Reemplazo directo de `openai.OpenAI`. Acepta los mismos argumentos de constructor.
+
+Todos los atributos no relacionados con `chat.completions` se delegan transparentemente a la instancia subyacente de `openai.OpenAI` (e.g. `embeddings`, `images`, `audio`).
+
+---
+
+### `mombeu.list_models() → list[str]`
+
+Retorna la lista ordenada de slugs de modelos soportados.
+
+---
+
+### `mombeu.current_model() → str | None`
+
+Retorna el slug del modelo actualmente cargado, o `None` si aún no se inicializó.
+
+---
+
+### `mombeu.reset()`
+
+Limpia todo el estado en memoria (modelo, pipeline). Útil para testing o cambio de modelo.
 
 ---
 
@@ -85,16 +202,7 @@ El dataset de preferencias es la contribución central del proyecto — el prime
 | `chosen` | Cierre mitológico correcto y naturalmente integrado |
 | `rejected` | Cierre incorrecto, forzado o culturalmente inexacto |
 
-### Fuente cultural
-
 Todos los cierres provienen exclusivamente del texto *Ñande Ypykuéra*. El modelo no inventa ni mezcla fuentes — esto garantiza coherencia cultural y trazabilidad completa.
-
-### Criterios de anotación humana
-
-- ¿El personaje mencionado existe en *Ñande Ypykuéra*? (Sí/No)
-- ¿La relación descrita es correcta según el grafo? (Sí/No)
-- ¿La conexión temática es natural? (1–3)
-- ¿El cierre suena fluido con términos en guaraní? (1–3)
 
 ---
 
@@ -113,60 +221,55 @@ Mombeu toma cuatro medidas explícitas para evitar folklorizar o estereotipar la
 
 Se comparan cuatro condiciones con evaluación humana:
 
-| Condición | Descripción |
-|---|---|
-| Baseline | LLM grande sin capa cultural |
-| Prompt engineering | Instrucción en el sistema para agregar cierres |
-| SFT | Fine-tuning con ejemplos del formato |
-| DPO | Alineamiento con preferencias culturales |
+| Condición         | Descripción                                             |
+|-------------------|---------------------------------------------------------|
+| Baseline          | LLM grande sin capa cultural                            |
+| Prompt engineering| Instrucción en el sistema para agregar cierres          |
+| SFT               | Fine-tuning con ejemplos del formato                    |
+| DPO               | Alineamiento con preferencias culturales                |
 
 Dimensiones evaluadas: naturalidad, memorabilidad, percepción cultural, intrusividad.
 
 ---
 
-## Instalación
-
-```bash
-git clone https://github.com/tu-usuario/mombeu
-cd mombeu
-pip install -r requirements.txt
-```
-
-## Uso rápido
-
-```python
-from mombeu import MombeuLayer
-
-# Inicializar la capa
-mombeu = MombeuLayer()
-
-# Conectar a cualquier respuesta de LLM
-respuesta_base = "Los truenos ocurren cuando..."
-respuesta_enriquecida = mombeu.enrich(respuesta_base)
-
-print(respuesta_enriquecida)
-```
-
----
-
 ## Stack tecnológico
 
-| Componente | Herramienta |
-|---|---|
-| Encoder de pertinencia | multilingual-e5-small + fine-tuning |
-| Modelo generativo | LLaMA 3.1 8B o Mistral 7B |
-| Fine-tuning | LoRA + SFT |
-| Alineamiento | DPO |
-| Grafo | NetworkX |
-| Demo | Gradio en HuggingFace Spaces |
+| Componente              | Herramienta                          |
+|-------------------------|--------------------------------------|
+| Encoder de pertinencia  | multilingual-e5-small + fine-tuning  |
+| Modelo generativo       | LLaMA 3.1 8B o Mistral 7B            |
+| Fine-tuning             | LoRA + SFT                           |
+| Alineamiento            | DPO                                  |
+| Grafo                   | NetworkX                             |
+| Wrapper Python          | openai SDK + transformers            |
+| Demo                    | Gradio en HuggingFace Spaces         |
 
 ---
 
-## Contribuciones
+## Desarrollo
 
-1. Arquitectura de capa cultural complementaria — encoder + modelo DPO que enriquece la salida de cualquier LLM sin modificar su arquitectura
-2. Dataset de preferencias culturales guaraní — primer corpus de pares chosen/rejected basado en cosmovisión guaraní
-3. Grafo de conocimiento mitológico — estructura verificable extraída de *Ñande Ypykuéra*
+```bash
+# Instalar con dependencias de desarrollo
+pip install -e ".[dev]"
+
+# Correr tests
+pytest tests/ -v
+
+# Formatear
+black mombeu/ tests/
+
+# Lint
+ruff check mombeu/ tests/
+```
+
+---
+
+## Notas técnicas
+
+- El modelo se cachea en `~/.cache/huggingface/` tras la primera descarga.
+- Se usa GPU automáticamente si CUDA está disponible; si no, cae a CPU.
+- La generación del cierre agrega latencia proporcional a `max_new_tokens` (default: 150).
+- Si la generación falla por cualquier motivo, se retorna la respuesta original de OpenAI sin modificar, con un warning.
 
 ---
 
@@ -183,12 +286,6 @@ print(respuesta_enriquecida)
 - **ODS 4** — Educación de calidad
 - **ODS 10** — Reducción de desigualdades lingüísticas en IA
 - **ODS 16** — Derechos lingüísticos y acceso cultural
-
----
-
-## Hackathon
-
-Este proyecto fue desarrollado para el **Hackathon SomosNLP 2026**, en la categoría de alineamiento cultural de LLMs.
 
 ---
 
