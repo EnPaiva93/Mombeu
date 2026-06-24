@@ -46,7 +46,7 @@ __all__ = [
 # Public API
 # ---------------------------------------------------------------------------
 
-def init(model: str, hf_token: str) -> None:
+def init(model: str, hf_token: str | None = None) -> None:
     """
     Initialize mombeu with a supported model.
 

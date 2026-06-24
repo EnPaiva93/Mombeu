@@ -10,9 +10,7 @@ from typing import Optional
 # Add / remove entries here as new models are published or deprecated.
 # ---------------------------------------------------------------------------
 SUPPORTED_MODELS: dict[str, str] = {
-    "mombeu-v1":   "mombeu-org/mombeu-model-v1",
-    "mombeu-v2":   "mombeu-org/mombeu-model-v2",
-    "mombeu-fast": "mombeu-org/mombeu-fast-model",
+    "mombeu-v1":   "thinkPy/mombeu-dpo-LFM2_5-350M",
 }
 
 # Deprecated models: still recognized but emit a warning.
